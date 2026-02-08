@@ -1,0 +1,8 @@
+{
+  "latest_version": "1.1.0",
+  "force_update": false,
+  "apk_download_url": "https://example.com/talay/talay-v1.1.0.apk",
+  "release_notes": "• Uygulama güncelleme sistemi eklendi\n• Performans iyileştirmeleri yapıldı\n• Hata düzeltmeleri",
+  "release_date": "2026-02-08",
+  "min_build_number": 1
+}
