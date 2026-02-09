@@ -88,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     letterSpacing: 8,
                     shadows: [
                       Shadow(
-                        color: TalayTheme.primaryCyan.withOpacity(0.5),
+                        color: TalayTheme.primaryCyan.withValues(alpha: 0.5),
                         blurRadius: 20,
                       ),
                     ],

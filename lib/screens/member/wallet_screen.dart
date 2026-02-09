@@ -14,8 +14,8 @@ class WalletScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(walletSummaryProvider);
     final transactions = ref.watch(transactionsProvider);
+    // ignore: unused_local_variable
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
-    final isAdmin = currentUser?.isAdmin ?? false;
 
     return Scaffold(
       backgroundColor: TalayTheme.background,
@@ -242,7 +242,7 @@ class WalletScreen extends ConsumerWidget {
                                       (t.isIncome
                                               ? TalayTheme.success
                                               : TalayTheme.error)
-                                          .withOpacity(0.15),
+                                          .withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(

@@ -105,7 +105,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Icon(
               Icons.chat_bubble_outline,
               size: 48,
-              color: TalayTheme.textSecondary.withOpacity(0.5),
+              color: TalayTheme.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 12),
             Text(
@@ -116,7 +116,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               'İlk mesajı gönderin!',
               style: TextStyle(
-                color: TalayTheme.textSecondary.withOpacity(0.7),
+                color: TalayTheme.textSecondary.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),
@@ -167,7 +167,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -193,7 +193,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       decoration: BoxDecoration(
         color: TalayTheme.background,
         border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
         ),
       ),
       child: Row(
@@ -208,7 +208,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 decoration: InputDecoration(
                   hintText: 'Mesajınızı yazın...',
                   hintStyle: TextStyle(
-                    color: TalayTheme.textSecondary.withOpacity(0.5),
+                    color: TalayTheme.textSecondary.withValues(alpha: 0.5),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -230,13 +230,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               gradient: LinearGradient(
                 colors: [
                   TalayTheme.primaryCyan,
-                  TalayTheme.primaryCyan.withOpacity(0.8),
+                  TalayTheme.primaryCyan.withValues(alpha: 0.8),
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: TalayTheme.primaryCyan.withOpacity(0.3),
+                  color: TalayTheme.primaryCyan.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -326,8 +326,8 @@ class _MessageBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isMine
-              ? TalayTheme.primaryCyan.withOpacity(0.2)
-              : Colors.white.withOpacity(0.08),
+              ? TalayTheme.primaryCyan.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -336,8 +336,8 @@ class _MessageBubble extends StatelessWidget {
           ),
           border: Border.all(
             color: isMine
-                ? TalayTheme.primaryCyan.withOpacity(0.3)
-                : Colors.white.withOpacity(0.1),
+                ? TalayTheme.primaryCyan.withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -357,7 +357,7 @@ class _MessageBubble extends StatelessWidget {
             Text(
               _formatTime(message.createdAt),
               style: TextStyle(
-                color: TalayTheme.textSecondary.withOpacity(0.7),
+                color: TalayTheme.textSecondary.withValues(alpha: 0.7),
                 fontSize: 11,
               ),
             ),

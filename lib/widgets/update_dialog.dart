@@ -52,15 +52,15 @@ class UpdateDialog extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: TalayTheme.primaryCyan.withOpacity(0.2),
+                    color: TalayTheme.primaryCyan.withValues(alpha: 0.2),
                     blurRadius: 30,
                     spreadRadius: 5,
                   ),
@@ -78,8 +78,8 @@ class UpdateDialog extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          TalayTheme.primaryCyan.withOpacity(0.3),
-                          TalayTheme.secondaryPurple.withOpacity(0.3),
+                          TalayTheme.primaryCyan.withValues(alpha: 0.3),
+                          TalayTheme.secondaryPurple.withValues(alpha: 0.3),
                         ],
                       ),
                     ),
@@ -111,10 +111,10 @@ class UpdateDialog extends StatelessWidget {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: TalayTheme.primaryCyan.withOpacity(0.1),
+                      color: TalayTheme.primaryCyan.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: TalayTheme.primaryCyan.withOpacity(0.3),
+                        color: TalayTheme.primaryCyan.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
@@ -143,7 +143,7 @@ class UpdateDialog extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       constraints: const BoxConstraints(maxHeight: 150),
@@ -152,7 +152,9 @@ class UpdateDialog extends StatelessWidget {
                           updateInfo.releaseNotes,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
-                                color: TalayTheme.textPrimary.withOpacity(0.9),
+                                color: TalayTheme.textPrimary.withValues(
+                                  alpha: 0.9,
+                                ),
                                 height: 1.5,
                               ),
                         ),
@@ -204,7 +206,9 @@ class UpdateDialog extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: TalayTheme.textSecondary,
                           side: BorderSide(
-                            color: TalayTheme.textSecondary.withOpacity(0.3),
+                            color: TalayTheme.textSecondary.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -225,13 +229,13 @@ class UpdateDialog extends StatelessWidget {
                         Icon(
                           Icons.info_outline_rounded,
                           size: 16,
-                          color: TalayTheme.warning.withOpacity(0.8),
+                          color: TalayTheme.warning.withValues(alpha: 0.8),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Bu güncelleme zorunludur',
                           style: TextStyle(
-                            color: TalayTheme.warning.withOpacity(0.8),
+                            color: TalayTheme.warning.withValues(alpha: 0.8),
                             fontSize: 12,
                           ),
                         ),

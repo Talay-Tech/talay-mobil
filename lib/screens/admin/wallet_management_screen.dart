@@ -136,7 +136,7 @@ class _WalletManagementScreenState
                       background: Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
-                          color: TalayTheme.error.withOpacity(0.2),
+                          color: TalayTheme.error.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         alignment: Alignment.centerRight,

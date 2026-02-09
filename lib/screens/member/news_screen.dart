@@ -71,7 +71,7 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
             Icon(
               Icons.article_outlined,
               size: 64,
-              color: TalayTheme.textSecondary.withOpacity(0.5),
+              color: TalayTheme.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -149,7 +149,7 @@ class _NewsCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: TalayTheme.secondaryPurple.withOpacity(0.2),
+                          color: TalayTheme.secondaryPurple.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(

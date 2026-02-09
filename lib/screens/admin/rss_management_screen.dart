@@ -58,7 +58,7 @@ class _RssManagementScreenState extends ConsumerState<RssManagementScreen> {
             Icon(
               Icons.rss_feed,
               size: 64,
-              color: TalayTheme.textSecondary.withOpacity(0.5),
+              color: TalayTheme.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(

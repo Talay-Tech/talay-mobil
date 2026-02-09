@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../talay_theme.dart';
 import '../../widgets/glass_card.dart';
+import '../../widgets/countdown_widget.dart';
 import '../../core/constants.dart';
 import '../../services/auth_service.dart';
 import '../../services/task_service.dart';
@@ -101,6 +102,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               // Header
               _buildHeader(context, user),
+              const SizedBox(height: 20),
+
+              // Countdown Timer (en üstte)
+              const CountdownWidget(),
               const SizedBox(height: 20),
 
               // Compass Direction Indicator
@@ -418,7 +423,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: TalayTheme.accentMagenta.withOpacity(0.15),
+                    color: TalayTheme.accentMagenta.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -463,7 +468,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: TalayTheme.warning.withOpacity(0.15),
+                    color: TalayTheme.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
