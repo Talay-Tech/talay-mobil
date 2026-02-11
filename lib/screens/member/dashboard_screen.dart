@@ -170,33 +170,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final distance = ref.watch(distanceToWorkshopProvider);
 
     return GlassCard(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       showGlow: true,
       child: Column(
         children: [
-          Text('Atölye Yönü', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 16),
+          Text('Atölye Yönü', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 150,
-            width: 150,
+            height: 100,
+            width: 100,
             child: _locationPermissionGranted
                 ? _CompassWidget(targetBearing: bearing)
                 : _buildLocationDisabled(),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             AppConstants.workshopName,
             style: Theme.of(
               context,
-            ).textTheme.bodyMedium?.copyWith(color: TalayTheme.primaryCyan),
+            ).textTheme.bodySmall?.copyWith(color: TalayTheme.primaryCyan),
           ),
           if (_locationPermissionGranted && distance > 0) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               _formatDistance(distance),
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: TalayTheme.textSecondary),
+              ).textTheme.bodySmall?.copyWith(color: TalayTheme.textSecondary),
             ),
           ],
         ],
@@ -733,30 +733,30 @@ class _CompassWidgetState extends State<_CompassWidget>
           children: [
             // Outer ring
             CustomPaint(
-              size: const Size(150, 150),
+              size: const Size(100, 100),
               painter: _CompassRingPainter(),
             ),
             // Arrow pointing to workshop
             Transform.rotate(
               angle: arrowDirection,
               child: Container(
-                width: 80,
-                height: 80,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
                   color: TalayTheme.primaryCyan.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color: TalayTheme.primaryCyan.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                      spreadRadius: 2,
+                      blurRadius: 15,
+                      spreadRadius: 1,
                     ),
                   ],
                 ),
                 child: const Icon(
                   Icons.navigation,
                   color: TalayTheme.primaryCyan,
-                  size: 40,
+                  size: 28,
                 ),
               ),
             ),

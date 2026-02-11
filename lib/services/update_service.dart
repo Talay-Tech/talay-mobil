@@ -2,12 +2,13 @@
 ///
 /// Uygulama güncellemelerini kontrol eden servis.
 /// Sunucudan sürüm bilgisi çeker ve mevcut sürümle karşılaştırır.
+/// OTA ile APK indirme ve otomatik kurulum desteği sağlar.
 
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/app_update_model.dart';
 
@@ -87,19 +88,14 @@ class UpdateService {
     return UpdateCheckResult.upToDate();
   }
 
-  /// APK indirme sayfasını açar
-  static Future<bool> openDownloadUrl(String url) async {
-    final uri = Uri.parse(url);
-
-    // Sadece HTTPS URL'lere izin ver (güvenlik)
-    if (uri.scheme != 'https') {
-      return false;
+  /// APK'yı uygulama içinden indir ve otomatik kurulum başlat
+  /// İlerleme durumunu stream olarak döndürür
+  static Stream<OtaEvent> downloadAndInstallApk(String url) {
+    try {
+      return OtaUpdate().execute(url, destinationFilename: 'talay.apk');
+    } catch (e) {
+      rethrow;
     }
-
-    if (await canLaunchUrl(uri)) {
-      return await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-    return false;
   }
 }
 

@@ -67,6 +67,7 @@ dependencies:
 
   # App Update
   package_info_plus: ^8.0.0
+  ota_update: ^7.0.1
 
 dev_dependencies:
   flutter_test:
