@@ -105,6 +105,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
                   _errorText = 'Dosya doğrulama hatası';
                   _isDownloading = false;
                   break;
+                case OtaStatus.INSTALLATION_DONE:
+                  _statusText = 'Kurulum tamamlandı!';
+                  _isDownloading = false;
+                  break;
+                case OtaStatus.INSTALLATION_ERROR:
+                  _errorText = 'Kurulum sırasında hata oluştu';
+                  _isDownloading = false;
+                  break;
+                default:
+                  break;
               }
             });
           },
