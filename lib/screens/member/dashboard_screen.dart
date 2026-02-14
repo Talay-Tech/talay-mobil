@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
@@ -14,12 +14,51 @@ import '../../services/task_service.dart';
 import '../../services/wallet_service.dart';
 import '../../services/announcement_service.dart';
 
-/// Location provider
-final userLocationProvider = StreamProvider<Position?>((ref) {
-  return Geolocator.getPositionStream(
+/// Location provider - permissions are checked before streaming
+final userLocationProvider = StreamProvider<Position?>((ref) async* {
+  // Check if location services are enabled
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    debugPrint('📍 Location services are disabled');
+    yield null;
+    return;
+  }
+
+  // Check and request permissions
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      debugPrint('📍 Location permission denied');
+      yield null;
+      return;
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    debugPrint('📍 Location permission permanently denied');
+    yield null;
+    return;
+  }
+
+  // Get initial position immediately
+  try {
+    final initialPosition = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
+    debugPrint(
+      '📍 Initial position: ${initialPosition.latitude}, ${initialPosition.longitude}',
+    );
+    yield initialPosition;
+  } catch (e) {
+    debugPrint('📍 Error getting initial position: $e');
+  }
+
+  // Then stream updates
+  yield* Geolocator.getPositionStream(
     locationSettings: const LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10, // Update every 10 meters
+      distanceFilter: 5, // Update every 5 meters for more responsive tracking
     ),
   );
 });
@@ -50,6 +89,11 @@ final distanceToWorkshopProvider = Provider<double>((ref) {
   );
 });
 
+/// Device heading from magnetometer (compass sensor)
+final deviceHeadingProvider = StreamProvider<double>((ref) {
+  return FlutterCompass.events!.map((event) => event.heading ?? 0);
+});
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -58,33 +102,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  bool _locationPermissionGranted = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkLocationPermission();
-  }
-
-  Future<void> _checkLocationPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      setState(() => _locationPermissionGranted = false);
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-
-    setState(() {
-      _locationPermissionGranted =
-          permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
@@ -166,39 +183,65 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildCompassCard(BuildContext context) {
+    final locationState = ref.watch(userLocationProvider);
     final bearing = ref.watch(bearingToWorkshopProvider);
     final distance = ref.watch(distanceToWorkshopProvider);
+    final deviceHeading = ref.watch(deviceHeadingProvider).valueOrNull ?? 0;
+
+    final hasLocation = locationState.valueOrNull != null;
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
       showGlow: true,
       child: Column(
         children: [
-          Text('Atölye Yönü', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.near_me, color: TalayTheme.primaryCyan, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'Talay Atölye',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: TalayTheme.primaryCyan,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 100,
-            width: 100,
-            child: _locationPermissionGranted
-                ? _CompassWidget(targetBearing: bearing)
-                : _buildLocationDisabled(),
+            height: 140, // Reverted to smaller size as requested
+            width: double.infinity,
+            child: locationState.when(
+              data: (position) => position != null
+                  ? _CompassWidget(
+                      targetBearing: bearing,
+                      deviceHeading: deviceHeading,
+                      distance: distance,
+                    )
+                  : _buildLocationDisabled(),
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: TalayTheme.primaryCyan),
+              ),
+              error: (_, __) => _buildLocationDisabled(),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            AppConstants.workshopName,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: TalayTheme.primaryCyan),
-          ),
-          if (_locationPermissionGranted && distance > 0) ...[
-            const SizedBox(height: 2),
-            Text(
-              _formatDistance(distance),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: TalayTheme.textSecondary),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: TalayTheme.background.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            child: Text(
+              _formatDistance(distance),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: TalayTheme.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -211,7 +254,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Icon(Icons.location_off, color: TalayTheme.textSecondary, size: 48),
         const SizedBox(height: 8),
         TextButton(
-          onPressed: _checkLocationPermission,
+          onPressed: () {
+            // Invalidate provider to retry permission check and location
+            ref.invalidate(userLocationProvider);
+          },
           child: const Text('Konumu Etkinleştir'),
         ),
       ],
@@ -669,11 +715,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-/// Compass widget that points to target bearing (static direction indicator)
+/// Compass widget that points toward the workshop using device heading
+/// The key formula: relativeBearing = targetBearing - deviceHeading
+/// This makes the arrow physically point toward the target as you rotate the phone
 class _CompassWidget extends StatefulWidget {
   final double targetBearing;
+  final double deviceHeading;
+  final double distance;
 
-  const _CompassWidget({required this.targetBearing});
+  const _CompassWidget({
+    required this.targetBearing,
+    required this.deviceHeading,
+    required this.distance,
+  });
 
   @override
   State<_CompassWidget> createState() => _CompassWidgetState();
@@ -681,90 +735,208 @@ class _CompassWidget extends StatefulWidget {
 
 class _CompassWidgetState extends State<_CompassWidget>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  double _previousBearing = 0;
+  // Low Pass Filter for smoothing sensor data
+  final _filter = _LowPassFilter(
+    alpha: 0.1,
+  ); // alpha 0.1 means 90% old data, 10% new
+  double _filteredHeading = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-    _animation = Tween<double>(
-      begin: 0,
-      end: widget.targetBearing,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    _controller.forward();
+  /// Normalize angle to [-180, 180] for shortest path rotation
+  double _normalizeAngle(double angle) {
+    while (angle > 180) angle -= 360;
+    while (angle < -180) angle += 360;
+    return angle;
   }
 
   @override
   void didUpdateWidget(_CompassWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.targetBearing != widget.targetBearing) {
-      _previousBearing = _animation.value;
-      _animation =
-          Tween<double>(
-            begin: _previousBearing,
-            end: widget.targetBearing,
-          ).animate(
-            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-          );
-      _controller.forward(from: 0);
-    }
+    // Apply low pass filter to smoothen the device heading
+    _filteredHeading = _filter.filter(widget.deviceHeading);
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _filteredHeading = widget.deviceHeading;
+  }
+
+  String _getDirectionText(double relativeAngle) {
+    final angle = _normalizeAngle(relativeAngle);
+    if (angle.abs() < 20) return 'Tam Karşınızda';
+    if (angle.abs() > 160) return 'Arkanızda';
+    if (angle > 0) return 'Sağınızda';
+    return 'Solunuzda';
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        final arrowDirection = _animation.value * math.pi / 180;
+    // Relative bearing = Target (Fixed) - Device (Dynamic Filtered)
+    final relativeAngle = _normalizeAngle(
+      widget.targetBearing - _filteredHeading,
+    );
 
-        return Stack(
+    final arrowRad = relativeAngle * math.pi / 180;
+
+    // Ring doesn't rotate - North is always "UP" on the phone screen
+    const ringRad = 0.0;
+
+    return Column(
+      children: [
+        Stack(
           alignment: Alignment.center,
           children: [
-            // Outer ring
-            CustomPaint(
-              size: const Size(100, 100),
-              painter: _CompassRingPainter(),
-            ),
-            // Arrow pointing to workshop
+            // Static compass ring
             Transform.rotate(
-              angle: arrowDirection,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: TalayTheme.primaryCyan.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: TalayTheme.primaryCyan.withValues(alpha: 0.4),
-                      blurRadius: 15,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.navigation,
-                  color: TalayTheme.primaryCyan,
-                  size: 28,
-                ),
+              angle: ringRad,
+              child: CustomPaint(
+                size: const Size(140, 140),
+                painter: _CompassRingPainter(),
+              ),
+            ),
+            // Arrow pointing to workshop (relative to device heading)
+            Transform.rotate(
+              angle: arrowRad,
+              child: SizedBox(
+                width: 80,
+                height: 80,
+                child: CustomPaint(painter: _ArrowPainter()),
+              ),
+            ),
+            // Center dot
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: TalayTheme.background,
+                shape: BoxShape.circle,
+                border: Border.all(color: TalayTheme.primaryCyan, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: TalayTheme.primaryCyan.withValues(alpha: 0.5),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
             ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+        // Direction text only visible when close (<= 5 meters)
+        if (widget.distance <= 5)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: TalayTheme.primaryCyan,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: TalayTheme.primaryCyan.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              _getDirectionText(relativeAngle),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          )
+        else
+          const SizedBox(height: 34),
+      ],
     );
   }
+}
+
+class _LowPassFilter {
+  final double alpha;
+  double? _lastValue;
+
+  _LowPassFilter({this.alpha = 0.2});
+
+  double filter(double input) {
+    if (_lastValue == null) {
+      _lastValue = input;
+      return input;
+    }
+
+    // Handle wrap-around for angles (0 <-> 360)
+    double diff = input - _lastValue!;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    _lastValue = _lastValue! + alpha * diff;
+
+    // Normalize result to 0-360
+    if (_lastValue! > 360) _lastValue = _lastValue! - 360;
+    if (_lastValue! < 0) _lastValue = _lastValue! + 360;
+
+    return _lastValue!;
+  }
+}
+
+/// Paints the directional arrow pointing to target
+class _ArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Modern sleek arrow design
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          TalayTheme.primaryCyan,
+          TalayTheme.primaryCyan.withValues(alpha: 0.6),
+        ],
+      ).createShader(Rect.fromCircle(center: center, radius: 40))
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    // Tip
+    path.moveTo(center.dx, center.dy - 35);
+    // Right wing
+    path.lineTo(center.dx + 12, center.dy + 15);
+    // Center notch
+    path.lineTo(center.dx, center.dy + 5);
+    // Left wing
+    path.lineTo(center.dx - 12, center.dy + 15);
+    path.close();
+
+    // Draw shadow
+    canvas.drawShadow(
+      path,
+      TalayTheme.primaryCyan.withValues(alpha: 0.5),
+      6,
+      true,
+    );
+
+    // Draw main arrow
+    canvas.drawPath(path, paint);
+
+    // Optional: Add a small white accent at the tip
+    final tipPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.4)
+      ..style = PaintingStyle.fill;
+
+    final tipPath = Path()
+      ..moveTo(center.dx, center.dy - 35)
+      ..lineTo(center.dx + 4, center.dy - 20)
+      ..lineTo(center.dx - 4, center.dy - 20)
+      ..close();
+
+    canvas.drawPath(tipPath, tipPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Quick Action Button Widget for Admin
@@ -820,24 +992,65 @@ class _CompassRingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
+    // Background circle
+    final bgPaint = Paint()
+      ..color = TalayTheme.primaryCyan.withOpacity(0.05)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius, bgPaint);
+
     // Outer ring
     final ringPaint = Paint()
-      ..color = TalayTheme.primaryCyan.withValues(alpha: 0.3)
+      ..color = TalayTheme.primaryCyan.withOpacity(0.2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawCircle(center, radius - 5, ringPaint);
+      ..strokeWidth = 2;
+    canvas.drawCircle(center, radius - 4, ringPaint);
 
-    // Direction markers
-    final markerPaint = Paint()
-      ..color = TalayTheme.textSecondary
-      ..style = PaintingStyle.fill;
+    // Tick marks - Static frame
+    for (int i = 0; i < 36; i++) {
+      final angle = (i * 10 - 90) * math.pi / 180;
+      final isCardinal = i % 9 == 0; // Every 90°
+      final isMajor = i % 3 == 0; // Every 30°
 
-    for (int i = 0; i < 8; i++) {
-      final angle = (i * 45 - 90) * math.pi / 180;
-      final x = center.dx + (radius - 15) * math.cos(angle);
-      final y = center.dy + (radius - 15) * math.sin(angle);
-      canvas.drawCircle(Offset(x, y), i % 2 == 0 ? 4 : 2, markerPaint);
+      final outerR = radius - 5;
+      final innerR = isCardinal
+          ? radius - 15
+          : (isMajor ? radius - 10 : radius - 7);
+
+      final x1 = center.dx + outerR * math.cos(angle);
+      final y1 = center.dy + outerR * math.sin(angle);
+      final x2 = center.dx + innerR * math.cos(angle);
+      final y2 = center.dy + innerR * math.sin(angle);
+
+      final tickPaint = Paint()
+        ..color = isCardinal
+            ? TalayTheme.primaryCyan.withOpacity(0.8)
+            : (isMajor
+                  ? Colors.white.withOpacity(0.4)
+                  : Colors.white.withOpacity(0.15))
+        ..strokeWidth = isCardinal ? 2 : (isMajor ? 1.5 : 0.8)
+        ..strokeCap = StrokeCap.round;
+
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), tickPaint);
     }
+
+    // Draw "Telefona Göre" label at bottom
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'TELEFON YÖNÜ',
+        style: TextStyle(
+          color: TalayTheme.textSecondary.withOpacity(0.5),
+          fontSize: 8,
+          letterSpacing: 1.2,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(center.dx - textPainter.width / 2, center.dy + radius / 2),
+    );
   }
 
   @override

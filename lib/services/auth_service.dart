@@ -93,6 +93,28 @@ class AuthService {
         .update({'role': role == UserRole.admin ? 'admin' : 'member'})
         .eq('id', userId);
   }
+
+  /// Update user display name
+  Future<void> updateName(String newName) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception('Kullanıcı oturumu bulunamadı');
+
+    // Update profiles table
+    await _client.from('profiles').update({'name': newName}).eq('id', user.id);
+
+    // Also update auth metadata
+    await _client.auth.updateUser(UserAttributes(data: {'name': newName}));
+  }
+
+  /// Update user email
+  Future<void> updateEmail(String newEmail) async {
+    await _client.auth.updateUser(UserAttributes(email: newEmail));
+  }
+
+  /// Update user password
+  Future<void> updatePassword(String newPassword) async {
+    await _client.auth.updateUser(UserAttributes(password: newPassword));
+  }
 }
 
 final authServiceProvider = Provider<AuthService>((ref) {

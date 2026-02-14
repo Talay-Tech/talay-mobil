@@ -50,13 +50,26 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
 
     // Kullanıcı daha önce atladıysa kontrol etme
     final skipped = ref.read(skipUpdateProvider);
-    if (skipped) return;
+    if (skipped) {
+      debugPrint('🔄 Update check skipped by user');
+      return;
+    }
 
     try {
+      debugPrint('🔄 Checking for update...');
       final result = await ref.read(updateCheckResultProvider.future);
+      debugPrint('🔄 Update status: ${result.status}');
+      debugPrint('🔄 Has update: ${result.hasUpdate}');
+
+      if (result.updateInfo != null) {
+        debugPrint('🔄 Latest version: ${result.updateInfo!.latestVersion}');
+        debugPrint('🔄 Download URL: ${result.updateInfo!.apkDownloadUrl}');
+      }
 
       if (result.hasUpdate && result.updateInfo != null && mounted) {
         final packageInfo = await ref.read(packageInfoProvider.future);
+        debugPrint('🔄 Current version: ${packageInfo.version}');
+        debugPrint('🔄 Showing update dialog...');
 
         await UpdateDialog.show(
           context,
@@ -67,10 +80,12 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
             ref.read(skipUpdateProvider.notifier).state = true;
           },
         );
+      } else {
+        debugPrint('🔄 No update needed or not mounted');
       }
     } catch (e) {
       // Güncelleme kontrolü başarısız - sessizce devam et
-      debugPrint('Update check failed: $e');
+      debugPrint('❌ Update check failed: $e');
     }
   }
 

@@ -5,6 +5,7 @@
 /// OTA ile APK indirme ve otomatik kurulum desteği sağlar.
 
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:ota_update/ota_update.dart';
@@ -31,9 +32,17 @@ class UpdateService {
   /// Sunucudan güncelleme bilgisini çeker
   Future<AppUpdateInfo?> fetchUpdateInfo() async {
     try {
+      // Cache-busting: GitHub CDN önbelleğini aşmak için timestamp ekle
+      final cacheBuster = DateTime.now().millisecondsSinceEpoch;
+      final url = '$updateCheckUrl?cb=$cacheBuster';
+      debugPrint('🔄 Fetching update info from: $url');
+
       final response = await http
-          .get(Uri.parse(updateCheckUrl))
+          .get(Uri.parse(url), headers: {'Cache-Control': 'no-cache'})
           .timeout(const Duration(seconds: 10));
+
+      debugPrint('🔄 Response status: ${response.statusCode}');
+      debugPrint('🔄 Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -41,7 +50,7 @@ class UpdateService {
       }
       return null;
     } catch (e) {
-      // Ağ hatası veya parse hatası - sessizce geç
+      debugPrint('❌ Fetch update info error: $e');
       return null;
     }
   }
